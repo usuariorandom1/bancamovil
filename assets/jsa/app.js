@@ -4,11 +4,12 @@ var tronWeb
 var pay
 var cont
 var Inv
+var addPay
 var addresact
-const  decimals = 1000000; //8 decimals in test, 6 decimals in production
+const  decimals = 100000000; //8 decimals in test, 6 decimals in production
 const  trc20ContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-const  fullNode = 'https://api.trongrid.io';
-const  solidityNode = 'https://api.trongrid.io';
+const  fullNode = 'https://api.trongrid.io';     //Production: https://api.trongrid.io
+const  solidityNode = 'https://api.trongrid.io'; //Test: https://api.trongrid.io
 const  eventServer = 'https://api.trongrid.io';
 // USDT Token = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
 // TEST Token = 'TQ7srwpzYEU9j7b5pcd31NgUKDQ64oZSuG'
@@ -46,9 +47,10 @@ async function gettronweb(){
     if(localStorage.address != this.addresact) {
       // Store
       this.addresact = localStorage.address;
-      // Retrieve
       // location.reload();
       console.log('actualizada '+this.addresact);
+      this.pay = 0;
+      this.addPay = 0;
       balanceact();
     }
     else if(localStorage.address == 'TPL66VK2gCXNCD7EJg9pgJRfqcRazjhUZY'){
@@ -72,11 +74,11 @@ function sleep(ms) {
 
 pay = 0;
 cont = 0;
-
+addPay = 0;
 async function balanceact() {
  
   const myContract = await tronWeb.contract().at(this.contractAddress);
-  //var address = "TGwQFn1oVKDDYrAzzKXPRhmaZuiPefhrv6";
+
   var id;
   let Inv; 
   let Ref;
@@ -109,13 +111,6 @@ async function balanceact() {
       return Addr;
     }
 
-  // tronWeb.trx.getBalance(addresact).then(result => {
-  //   this.balance = result/1000000
-  //   $("#balances").text(this.balance)
-  //   console.log(result) 
-  // });
-  // refrescar();
-  
   myContract.getDeposits().call().then(totalActive => {
     // activ = totalActive.active[0];
     Inv = totalActive;
@@ -123,7 +118,7 @@ async function balanceact() {
     // var now = Date.now();
     var now = new Date().getTime();
     now = (now/1000).toFixed();
-    console.log(now);
+    // console.log(now);
     // console.table(Inv);
     
     id = 0;
@@ -142,13 +137,15 @@ async function balanceact() {
       $("#tableInvest").append('<th scope="row">' + idtab + '</th>');
       if(Inv.amount[i] != 0 && Inv.active[i] == true) {
         var amount = parseInt(Inv.amount[i]);
-        if(now >= Inv.timePay[i] && Inv.numPay[i] < 5) {
+        while(now >= Inv.timePay[i] && Inv.numPay[i] < 5) {
           // amount = amount * 50 / 1000;
-          this.pay += (amount * 50 / 1000);
+          this.addPay += (amount * 50 / 1000);
           console.log(this.pay);
+          Inv.timePay[i] += 2592000;//60;
+          Inv.numPay[i]++;
         }
-        else if(now >= Inv.timePay[i] && Inv.numPay[i] == 5) {
-          this.pay = (amount * 50 / 1000) + amount;
+        if(now >= Inv.timePay[i] && Inv.numPay[i] == 5) {
+          this.addPay += (amount * 50 / 1000) + amount;
           console.log(amount);
         }
         $("#tableInvest").append('<td>' + Inv.amount[i]/decimals + '</td>');
@@ -194,9 +191,6 @@ async function balanceact() {
       idtab++;
     }
   }).catch(err => console.error(err)/*, alert('Hola, Error en la consulta')*/);
-  // $(document).ready(function(){
-
-  // });
 }
 
 App = {
@@ -246,16 +240,6 @@ App = {
       // var myContract = new XMLHttpRequest();
       const myContract = await tronWeb.contract().at(this.contractAddress);
       
-      //triggerSmartContract();
-      // let USDTContract2 = await tronWeb.contract().at('TQ7srwpzYEU9j7b5pcd31NgUKDQ64oZSuG')
-      // let getDataUSDT = await USDTContract2.balanceOf('TGyw7oQ2KhNfcyKGLFDFW9AEKhWB7TvRNT').send({
-      //   feeLimit:100_000_000,
-      //   callValue:0,
-      //   tokenId:0,
-      //   tokenValue:0,
-      //   shouldPollResponse:true
-      // });
-      // console.log({getDataUSDT});
       try {
         let contractU = await tronWeb.contract().at(trc20ContractAddress);
         //Use send to execute a non-pure or modify smart contract method on a given smart contract that modify or change values on the blockchain.
@@ -280,13 +264,11 @@ App = {
 
       myContract.totalInvestors().call().then(totalInv => {
           this.totalInvest = parseInt(totalInv);
-          $("#tiotalInvestors").text(this.totalInvest);
+          $("#totalInvestors").text(this.totalInvest);
       }).catch(err => console.error(err));
       
       myContract.totalInvestorsActive().call().then(totalInvActiv => {
-          // console.log(totalInvActiv);
-          // _balance = parseInt(_balance.balance);
-          // _balance = _balance/1000000;
+
           $("#totalActiveInvestors").text(totalInvActiv);
       }).catch(err => console.error(err));
 
@@ -296,7 +278,7 @@ App = {
       myContract.peoples(addresact).call().then(totalWithdrawn => {
           withdrawn = parseInt(totalWithdrawn.amountTotalPayments);
           $("#totalWithdrawn").text(withdrawn/decimals);
-          // console.log(totalWithdrawn);
+
       }).catch(err => console.error(err));
 
       myContract.peoples(addresact).call().then(totalinvestedUs => {
@@ -307,8 +289,8 @@ App = {
       myContract.peoples(addresact).call().then(availableWithdraw => {
           // console.log(availableWithdraw.availableWithdraw);
           var availWithdraw = parseInt(availableWithdraw.availableWithdraw);
-          if(availableWithdraw.blackList == false && this.cont == 0) {
-            this.pay += availWithdraw;
+          if(availableWithdraw.blackList == false) { //&& this.cont == 0
+            this.pay = this.addPay + availWithdraw;
             $("#profit").text(this.pay/decimals);
             this.cont++;
           }
@@ -319,17 +301,6 @@ App = {
           // console.log({timepay});
       }).catch(err => console.error(err));
       
-      // var payuser = (this.totalinvestedUser* 20 / 1000);
-      
-      // payuser = payuser / 86400;
-      // payuser = (payuser * this.timepay);
-      // payuser = payuser + this.totalref;
-      // payuser = payuser / 1000000;
-      // this.pay = payuser;
-      // payuser = payuser.toFixed(6);
-      
-      // $("#profit").text(payuser);
-      // console.log(this.pay);
     var referido = getParameterByName('ref')
       
   		if(addresact == '') {
@@ -344,10 +315,6 @@ App = {
     }
     setInterval(refrescar, 2000)
     
-    // if(cont <= 3) {
-    //   setInterval(refrescar(), 1000);
-    //   cont++;
-    // }
   },
 
   transferTRC20: async function(amoutInvest) {
