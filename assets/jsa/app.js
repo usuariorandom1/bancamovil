@@ -308,7 +308,7 @@ App = {
   		  $("#Referral").text(locat);
   		}
       else{
-        var locat = window.location.hostname+'?ref='+addresact;
+        var locat = window.location.hostname+'/my-account.html?ref='+addresact;
         $("#Referral").text(locat);
       }
       // console.log(this.cont);
