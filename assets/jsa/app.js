@@ -6,7 +6,7 @@ var cont
 var Inv
 var addPay
 var addresact
-const  decimals = 100000000; //8 decimals in test, 6 decimals in production
+const  decimals = 1000000; //8 decimals in test, 6 decimals in production
 const  trc20ContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const  fullNode = 'https://api.trongrid.io';     //Production: https://api.trongrid.io
 const  solidityNode = 'https://api.trongrid.io'; //Test: https://api.trongrid.io
